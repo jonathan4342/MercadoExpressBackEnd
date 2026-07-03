@@ -2,8 +2,8 @@ import { Product } from '../domain/entities/product.entity';
 import { InsufficientStockError, ValidationError } from '../domain/errors/domain.errors';
 
 const validProps = {
-  name: 'Agua Mineral 500ml', category: 'Bebidas',
-  price: 1500, currentStock: 150, minimumStock: 50, supplier: 'Distribuidora Andina'
+  name: 'Agua Mineral 500ml', categoryId: 1,
+  price: 1500, currentStock: 150, minimumStock: 50, supplierId: 2
 };
 
 describe('Product (entidad de dominio)', () => {
@@ -24,7 +24,8 @@ describe('Product (entidad de dominio)', () => {
       ['precio 0', { ...validProps, price: 0 }],
       ['precio negativo', { ...validProps, price: -5 }],
       ['stock mínimo 0', { ...validProps, minimumStock: 0 }],
-      ['sin proveedor', { ...validProps, supplier: '  ' }]
+      ['categoryId inválido', { ...validProps, categoryId: 0 }],
+      ['supplierId inválido', { ...validProps, supplierId: -1 }]
     ])('rechaza %s', (_label, props) => {
       expect(() => Product.create(props as any)).toThrow(ValidationError);
     });

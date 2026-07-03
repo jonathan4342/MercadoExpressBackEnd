@@ -9,10 +9,14 @@ export const TYPES = {
   MovementRepository: Symbol.for('MovementRepository'),
   AlertRepository: Symbol.for('AlertRepository'),
   OrderRepository: Symbol.for('OrderRepository'),
+  CategoryRepository: Symbol.for('CategoryRepository'),
+  SupplierRepository: Symbol.for('SupplierRepository'),
 
   // Casos de uso de un solo repositorio (consumidos directo por controladores)
   CreateProductUseCase: Symbol.for('CreateProductUseCase'),
   ListInventoryUseCase: Symbol.for('ListInventoryUseCase'),
+  ListCategoriesUseCase: Symbol.for('ListCategoriesUseCase'),
+  ListSuppliersUseCase: Symbol.for('ListSuppliersUseCase'),
   ListAlertsUseCase: Symbol.for('ListAlertsUseCase'),
   ListOrdersUseCase: Symbol.for('ListOrdersUseCase'),
   ApproveOrderUseCase: Symbol.for('ApproveOrderUseCase'),
@@ -22,11 +26,6 @@ export const TYPES = {
   UserRepository: Symbol.for('UserRepository'),
   TokenService: Symbol.for('TokenService'),
   IssueTokenUseCase: Symbol.for('IssueTokenUseCase'),
-
-  // Tiempo real (RF-03)
-  AlertBroadcaster: Symbol.for('AlertBroadcaster'),
-  BroadcastAlertEventUseCase: Symbol.for('BroadcastAlertEventUseCase'),
-  AlertEventListener: Symbol.for('AlertEventListener'),
 
   // Servicios de aplicación (orquestan varios casos de uso)
   AdjustStockService: Symbol.for('AdjustStockService'),

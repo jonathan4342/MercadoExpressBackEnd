@@ -5,18 +5,18 @@ import { InsufficientStockError, ValidationError } from '../errors/domain.errors
 
 export interface CreateProductProps {
   name: string;
-  category: string;
+  categoryId: number;
   price: number;
   currentStock?: number;
   minimumStock: number;
-  supplier: string;
+  supplierId: number;
 }
 
 /**
  * Entidad de dominio (RF-01, RF-02, Reglas 1 y 2).
- * id  : PK incremental interna (la asigna la BD — GENERATED ALWAYS AS IDENTITY)
- * uid : identificador público UUID (el que expone la API)
- * Ambos son null hasta que el repositorio persiste la entidad.
+ * Referencia categoría y proveedor por ID (los selects del front envían IDs);
+ * los nombres se resuelven al leer desde la BD (JOIN) para las respuestas.
+ * id, uid y SKU los asigna la BD al persistir.
  */
 export class Product {
   private constructor(
@@ -24,11 +24,13 @@ export class Product {
     private readonly _uid: string | null,
     private readonly _sku: Sku | null,
     private _name: string,
-    private _category: string,
+    private readonly _categoryId: number,
+    private readonly _categoryName: string | null,
     private _price: number,
     private _currentStock: number,
     private _minimumStock: number,
-    private _supplier: string
+    private readonly _supplierId: number,
+    private readonly _supplierName: string | null
   ) {}
 
   // ---------- Fábricas ----------
@@ -36,29 +38,31 @@ export class Product {
     Product.assertName(props.name);
     Product.assertPrice(props.price);
     Product.assertMinimumStock(props.minimumStock);
+    Product.assertCatalogId(props.categoryId, 'categoryId');
+    Product.assertCatalogId(props.supplierId, 'supplierId');
     const initialStock = props.currentStock ?? 0;
     if (!Number.isInteger(initialStock) || initialStock < 0) {
       throw new ValidationError('El stock inicial debe ser un entero mayor o igual a 0.');
     }
-    if (!props.category?.trim()) throw new ValidationError('La categoría es obligatoria.');
-    if (!props.supplier?.trim()) throw new ValidationError('El proveedor es obligatorio.');
 
     return new Product(
-      null, null,
-      null, // el SKU lo genera la base de datos al insertar (trigger)
-      props.name.trim(), props.category.trim(), props.price,
-      initialStock, props.minimumStock, props.supplier.trim()
+      null, null, null,
+      props.name.trim(), props.categoryId, null, props.price,
+      initialStock, props.minimumStock, props.supplierId, null
     );
   }
 
-  /** Rehidratación desde la base de datos. */
+  /** Rehidratación desde la base de datos (con nombres resueltos por JOIN). */
   public static restore(row: {
-    id: number; uid: string; sku: string; name: string; category: string;
-    price: number; currentStock: number; minimumStock: number; supplier: string;
+    id: number; uid: string; sku: string; name: string;
+    categoryId: number; category: string; price: number;
+    currentStock: number; minimumStock: number;
+    supplierId: number; supplier: string;
   }): Product {
     return new Product(
-      row.id, row.uid, Sku.create(row.sku), row.name, row.category,
-      row.price, row.currentStock, row.minimumStock, row.supplier
+      row.id, row.uid, Sku.create(row.sku), row.name,
+      row.categoryId, row.category, row.price,
+      row.currentStock, row.minimumStock, row.supplierId, row.supplier
     );
   }
 
@@ -117,11 +121,27 @@ export class Product {
 
   // ---------- Getters ----------
   get name(): string { return this._name; }
-  get category(): string { return this._category; }
+  get categoryId(): number { return this._categoryId; }
+  get supplierId(): number { return this._supplierId; }
   get price(): number { return this._price; }
   get currentStock(): number { return this._currentStock; }
   get minimumStock(): number { return this._minimumStock; }
-  get supplier(): string { return this._supplier; }
+
+  /** Nombre de la categoría (disponible tras leer de la BD). */
+  get category(): string {
+    if (this._categoryName === null) {
+      throw new ValidationError('El nombre de la categoría se resuelve al persistir.');
+    }
+    return this._categoryName;
+  }
+
+  /** Nombre del proveedor (disponible tras leer de la BD). */
+  get supplier(): string {
+    if (this._supplierName === null) {
+      throw new ValidationError('El nombre del proveedor se resuelve al persistir.');
+    }
+    return this._supplierName;
+  }
 
   // ---------- Validaciones privadas ----------
   private static assertName(name: string): void {
@@ -138,6 +158,11 @@ export class Product {
   private static assertMinimumStock(min: number): void {
     if (!Number.isInteger(min) || min <= 0) {
       throw new ValidationError('El stock mínimo es obligatorio y debe ser un entero mayor a 0.');
+    }
+  }
+  private static assertCatalogId(value: number, field: string): void {
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new ValidationError(`El campo '${field}' es obligatorio y debe ser un ID válido.`);
     }
   }
   private static assertQuantity(quantity: number): void {

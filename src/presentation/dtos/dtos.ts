@@ -6,10 +6,12 @@ export interface ProductResponseDto {
   uid: string;
   sku: string;
   name: string;
+  categoryId: number;
   category: string;
   price: number;
   currentStock: number;
   minimumStock: number;
+  supplierId: number;
   supplier: string;
   belowMinimum: boolean;
 }
@@ -35,6 +37,7 @@ export interface AlertResponseDto {
 export interface OrderResponseDto {
   uid: string;
   productId: number;
+  supplierId: number;
   supplier: string;
   alertId: number | null;
   quantity: number;
@@ -43,4 +46,9 @@ export interface OrderResponseDto {
   createdAt: Date | null;
   approvedAt: Date | null;
   receivedAt: Date | null;
+}
+
+export interface CatalogItemDto {
+  id: number;
+  name: string;
 }

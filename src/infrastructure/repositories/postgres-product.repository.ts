@@ -1,15 +1,20 @@
 import { injectable } from 'inversify';
 import { Product } from '../../domain/entities/product.entity';
+import { ValidationError } from '../../domain/errors/domain.errors';
 import { IProductRepository, InventoryFilters } from '../../domain/ports/product.repository';
 import { Queryable } from '../database/queryable';
 
 const BASE_SELECT = `
-  SELECT p.id, p.uid, p.sku, p.name, c.name AS category, p.price::float AS price,
-         p.current_stock, p.minimum_stock, s.name AS supplier
+  SELECT p.id, p.uid, p.sku, p.name,
+         p.category_id, c.name AS category,
+         p.price::float AS price, p.current_stock, p.minimum_stock,
+         p.supplier_id, s.name AS supplier
   FROM products p
   JOIN categories c ON c.id = p.category_id
   JOIN suppliers  s ON s.id = p.supplier_id
 `;
+
+const FK_VIOLATION = '23503';
 
 @injectable()
 export class PostgresProductRepository implements IProductRepository {
@@ -53,57 +58,50 @@ export class PostgresProductRepository implements IProductRepository {
   }
 
   public async save(product: Product): Promise<Product> {
-    // El dominio trabaja con nombres de categoría/proveedor; aquí se normalizan
-    await this.db.query(
-      `INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
-      [product.category]
-    );
-    await this.db.query(
-      `INSERT INTO suppliers (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
-      [product.supplier]
-    );
+    try {
+      if (!product.isPersisted()) {
+        // La BD asigna id (IDENTITY), uid y SKU (trigger); los nombres se resuelven aquí
+        const { rows } = await this.db.query(
+          `INSERT INTO products (name, category_id, price, current_stock, minimum_stock, supplier_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id, uid, sku,
+             (SELECT name FROM categories WHERE id = $2) AS category,
+             (SELECT name FROM suppliers  WHERE id = $6) AS supplier`,
+          [product.name, product.categoryId, product.price,
+           product.currentStock, product.minimumStock, product.supplierId]
+        );
+        return Product.restore({
+          id: rows[0].id, uid: rows[0].uid, sku: rows[0].sku, name: product.name,
+          categoryId: product.categoryId, category: rows[0].category,
+          price: product.price, currentStock: product.currentStock,
+          minimumStock: product.minimumStock,
+          supplierId: product.supplierId, supplier: rows[0].supplier
+        });
+      }
 
-    if (!product.isPersisted()) {
-      // INSERT: la BD asigna id (IDENTITY) y uid (gen_random_uuid)
-      // El SKU no se envía: lo genera el trigger trg_products_generate_sku
-      const { rows } = await this.db.query(
-        `INSERT INTO products (name, category_id, price, current_stock, minimum_stock, supplier_id)
-         VALUES ($1,
-                 (SELECT id FROM categories WHERE name = $2),
-                 $3, $4, $5,
-                 (SELECT id FROM suppliers WHERE name = $6))
-         RETURNING id, uid, sku`,
-        [product.name, product.category, product.price,
-         product.currentStock, product.minimumStock, product.supplier]
+      await this.db.query(
+        `UPDATE products SET
+           name = $2, category_id = $3, price = $4,
+           current_stock = $5, minimum_stock = $6, supplier_id = $7
+         WHERE id = $1`,
+        [product.id, product.name, product.categoryId, product.price,
+         product.currentStock, product.minimumStock, product.supplierId]
       );
-      return Product.restore({
-        id: rows[0].id, uid: rows[0].uid, sku: rows[0].sku, name: product.name,
-        category: product.category, price: product.price,
-        currentStock: product.currentStock, minimumStock: product.minimumStock,
-        supplier: product.supplier
-      });
+      return product;
+    } catch (err) {
+      if ((err as { code?: string }).code === FK_VIOLATION) {
+        throw new ValidationError('La categoría o el proveedor indicados no existen.');
+      }
+      throw err;
     }
-
-    await this.db.query(
-      `UPDATE products SET
-         name          = $2,
-         category_id   = (SELECT id FROM categories WHERE name = $3),
-         price         = $4,
-         current_stock = $5,
-         minimum_stock = $6,
-         supplier_id   = (SELECT id FROM suppliers WHERE name = $7)
-       WHERE id = $1`,
-      [product.id, product.name, product.category, product.price,
-       product.currentStock, product.minimumStock, product.supplier]
-    );
-    return product;
   }
 
   private toEntity(row: any): Product {
     return Product.restore({
-      id: row.id, uid: row.uid, sku: row.sku, name: row.name, category: row.category,
-      price: row.price, currentStock: row.current_stock,
-      minimumStock: row.minimum_stock, supplier: row.supplier
+      id: row.id, uid: row.uid, sku: row.sku, name: row.name,
+      categoryId: row.category_id, category: row.category,
+      price: row.price, currentStock: row.current_stock, minimumStock: row.minimum_stock,
+      supplierId: row.supplier_id, supplier: row.supplier
     });
   }
 }

@@ -41,7 +41,7 @@ export class CreateOrderService {
 
       return new RegisterOrderUseCase(repos.orders).execute({
         productId: product.id,
-        supplier: product.supplier,
+        supplierId: product.supplierId,
         quantity,
         minimumOrderQuantity: product.minimumOrderQuantity(), // Regla 2
         alertId

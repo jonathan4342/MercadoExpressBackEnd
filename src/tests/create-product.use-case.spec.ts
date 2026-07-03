@@ -22,8 +22,9 @@ class FakeUnitOfWork implements IUnitOfWork {
           // Emula el trigger trg_products_generate_sku de la BD
           const persisted = Product.restore({
             id: this.seq, uid: randomUUID(), sku: `FRU00${this.seq}`, name: p.name,
-            category: p.category, price: p.price, currentStock: p.currentStock,
-            minimumStock: p.minimumStock, supplier: p.supplier
+            categoryId: p.categoryId, category: 'Frutas', price: p.price,
+            currentStock: p.currentStock, minimumStock: p.minimumStock,
+            supplierId: p.supplierId, supplier: 'Distribuidora Andina'
           });
           this.products.set(this.seq++, persisted);
           return persisted;
@@ -38,8 +39,8 @@ class FakeUnitOfWork implements IUnitOfWork {
 }
 
 const buildEntity = () => Product.create({
-  name: 'Manzana Roja kg', category: 'Frutas',
-  price: 4200, currentStock: 100, minimumStock: 20, supplier: 'Distribuidora Andina'
+  name: 'Manzana Roja kg', categoryId: 5,
+  price: 4200, currentStock: 100, minimumStock: 20, supplierId: 1
 });
 
 describe('CreateProductUseCase (RF-01 — POST /api/products)', () => {
@@ -66,8 +67,8 @@ describe('CreateProductUseCase (RF-01 — POST /api/products)', () => {
 
   it('la entidad llega con las reglas de dominio ya aplicadas (stock 0 por defecto)', async () => {
     const entity = Product.create({
-      name: 'Pera kg', category: 'Frutas', price: 3000,
-      minimumStock: 10, supplier: 'Distribuidora Andina'
+      name: 'Pera kg', categoryId: 5, price: 3000,
+      minimumStock: 10, supplierId: 1
     });
     const p = await useCase.execute(entity, 'j');
     expect(p.currentStock).toBe(0);

@@ -17,8 +17,8 @@ class FakeDb {
   private seq = 1;
 
   seedProduct(props: {
-    sku: string; name: string; category: string; price: number;
-    currentStock: number; minimumStock: number; supplier: string;
+    sku: string; name: string; categoryId: number; category: string; price: number;
+    currentStock: number; minimumStock: number; supplierId: number; supplier: string;
   }): Product {
     const persisted = Product.restore({ id: this.seq, uid: randomUUID(), ...props });
     this.products.set(this.seq++, persisted);
@@ -90,8 +90,8 @@ describe('AdjustStockService (RF-02 + RF-03 — orquesta 3 casos de uso)', () =>
     db = new FakeDb();
     service = new AdjustStockService(new FakeUnitOfWork(db));
     product = db.seedProduct({
-      sku: 'LAC002', name: 'Yogur Natural 500g', category: 'Lácteos',
-      price: 2800, currentStock: 30, minimumStock: 25, supplier: 'Lácteos del Valle'
+      sku: 'LAC002', name: 'Yogur Natural 500g', categoryId: 2, category: 'Lácteos',
+      price: 2800, currentStock: 30, minimumStock: 25, supplierId: 2, supplier: 'Lácteos del Valle'
     });
   });
 

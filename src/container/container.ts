@@ -5,31 +5,33 @@ import { CreateOrderService } from '../application/services/create-order.service
 import { ListProductMovementsService } from '../application/services/list-product-movements.service';
 import { ReceiveOrderService } from '../application/services/receive-order.service';
 import { ApproveOrderUseCase } from '../application/use-cases/approve-order.use-case';
-import { BroadcastAlertEventUseCase } from '../application/use-cases/broadcast-alert-event.use-case';
 import { CreateProductUseCase } from '../application/use-cases/create-product.use-case';
 import { IssueTokenUseCase } from '../application/use-cases/issue-token.use-case';
 import { ListAlertsUseCase } from '../application/use-cases/list-alerts.use-case';
+import { ListCategoriesUseCase } from '../application/use-cases/list-categories.use-case';
+import { ListSuppliersUseCase } from '../application/use-cases/list-suppliers.use-case';
 import { ListInventoryUseCase } from '../application/use-cases/list-inventory.use-case';
 import { ListOrdersUseCase } from '../application/use-cases/list-orders.use-case';
 import { RejectOrderUseCase } from '../application/use-cases/reject-order.use-case';
 import { IAlertRepository } from '../domain/ports/alert.repository';
+import { ICategoryRepository } from '../domain/ports/category.repository';
+import { ISupplierRepository } from '../domain/ports/supplier.repository';
+import { PostgresCategoryRepository } from '../infrastructure/repositories/postgres-category.repository';
+import { PostgresSupplierRepository } from '../infrastructure/repositories/postgres-supplier.repository';
 import { IInventoryMovementRepository } from '../domain/ports/inventory-movement.repository';
 import { IProductRepository } from '../domain/ports/product.repository';
 import { IPurchaseOrderRepository } from '../domain/ports/purchase-order.repository';
 import { IUnitOfWork } from '../domain/ports/unit-of-work';
 import { PostgresPoolFactory } from '../infrastructure/database/postgres-pool';
 import { PostgresUnitOfWork } from '../infrastructure/database/postgres-unit-of-work';
-import { PostgresAlertListener } from '../infrastructure/database/postgres-alert-listener';
 import { PostgresAlertRepository } from '../infrastructure/repositories/postgres-alert.repository';
 import { PostgresMovementRepository } from '../infrastructure/repositories/postgres-movement.repository';
 import { PostgresOrderRepository } from '../infrastructure/repositories/postgres-order.repository';
 import { PostgresProductRepository } from '../infrastructure/repositories/postgres-product.repository';
-import { IAlertBroadcaster } from '../domain/ports/alert-broadcaster';
 import { ITokenService } from '../domain/ports/token-service';
 import { IUserRepository } from '../domain/ports/user.repository';
 import { PostgresUserRepository } from '../infrastructure/repositories/postgres-user.repository';
 import { JwtTokenService } from '../infrastructure/security/jwt-token.service';
-import { SocketIoAlertBroadcaster } from '../infrastructure/websocket/socketio-alert-broadcaster';
 import { TYPES } from './types';
 
 /** Composition Root: contratos (puertos) → implementaciones (adaptadores). */
@@ -55,10 +57,18 @@ export function buildContainer(): Container {
   container.bind<IPurchaseOrderRepository>(TYPES.OrderRepository).toDynamicValue(
     (ctx) => new PostgresOrderRepository(ctx.container.get<Pool>(TYPES.DatabasePool))
   );
+  container.bind<ICategoryRepository>(TYPES.CategoryRepository).toDynamicValue(
+    (ctx) => new PostgresCategoryRepository(ctx.container.get<Pool>(TYPES.DatabasePool))
+  );
+  container.bind<ISupplierRepository>(TYPES.SupplierRepository).toDynamicValue(
+    (ctx) => new PostgresSupplierRepository(ctx.container.get<Pool>(TYPES.DatabasePool))
+  );
 
   // Casos de uso de un solo repositorio
   container.bind(TYPES.CreateProductUseCase).to(CreateProductUseCase);
   container.bind(TYPES.ListInventoryUseCase).to(ListInventoryUseCase);
+  container.bind(TYPES.ListCategoriesUseCase).to(ListCategoriesUseCase);
+  container.bind(TYPES.ListSuppliersUseCase).to(ListSuppliersUseCase);
   container.bind(TYPES.ListAlertsUseCase).to(ListAlertsUseCase);
   container.bind(TYPES.ListOrdersUseCase).to(ListOrdersUseCase);
   container.bind(TYPES.ApproveOrderUseCase).to(ApproveOrderUseCase);
@@ -78,18 +88,6 @@ export function buildContainer(): Container {
     (ctx) => new IssueTokenUseCase(
       ctx.container.get<IUserRepository>(TYPES.UserRepository),
       ctx.container.get<ITokenService>(TYPES.TokenService)
-    )
-  );
-
-  // Tiempo real: puerto de difusión + caso de uso + listener LISTEN/NOTIFY
-  container.bind<IAlertBroadcaster>(TYPES.AlertBroadcaster).to(SocketIoAlertBroadcaster);
-  container.bind(TYPES.BroadcastAlertEventUseCase).toDynamicValue(
-    (ctx) => new BroadcastAlertEventUseCase(ctx.container.get<IAlertBroadcaster>(TYPES.AlertBroadcaster))
-  );
-  container.bind(TYPES.AlertEventListener).toDynamicValue(
-    (ctx) => new PostgresAlertListener(
-      process.env.DATABASE_URL,
-      ctx.container.get<BroadcastAlertEventUseCase>(TYPES.BroadcastAlertEventUseCase)
     )
   );
 

@@ -10,9 +10,11 @@ import {
 export class ProductResponseMapper {
   public static toDto(p: Product): ProductResponseDto {
     return {
-      uid: p.uid, sku: p.sku.value, name: p.name, category: p.category,
+      uid: p.uid, sku: p.sku.value, name: p.name,
+      categoryId: p.categoryId, category: p.category,
       price: p.price, currentStock: p.currentStock, minimumStock: p.minimumStock,
-      supplier: p.supplier, belowMinimum: p.isAtOrBelowMinimum()
+      supplierId: p.supplierId, supplier: p.supplier,
+      belowMinimum: p.isAtOrBelowMinimum()
     };
   }
 }
@@ -38,7 +40,8 @@ export class AlertResponseMapper {
 export class OrderResponseMapper {
   public static toDto(o: PurchaseOrder): OrderResponseDto {
     return {
-      uid: o.uid, productId: o.productId, supplier: o.supplier, alertId: o.alertId,
+      uid: o.uid, productId: o.productId,
+      supplierId: o.supplierId, supplier: o.supplier, alertId: o.alertId,
       quantity: o.quantity, status: o.status, rejectionReason: o.rejectionReason,
       createdAt: o.createdAt, approvedAt: o.approvedAt, receivedAt: o.receivedAt
     };

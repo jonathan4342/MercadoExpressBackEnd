@@ -13,7 +13,8 @@ export class PurchaseOrder {
     private readonly _id: number | null,
     private readonly _uid: string | null,
     public readonly productId: number,
-    public readonly supplier: string,
+    public readonly supplierId: number,
+    private readonly _supplierName: string | null,
     public readonly alertId: number | null,
     public readonly quantity: number,
     private _status: OrderStatus,
@@ -24,7 +25,7 @@ export class PurchaseOrder {
   ) {}
 
   public static create(props: {
-    productId: number; supplier: string; quantity: number;
+    productId: number; supplierId: number; quantity: number;
     minimumOrderQuantity: number; alertId?: number | null;
   }): PurchaseOrder {
     if (!Number.isInteger(props.quantity) || props.quantity <= 0) {
@@ -37,20 +38,29 @@ export class PurchaseOrder {
       );
     }
     return new PurchaseOrder(
-      null, null, props.productId, props.supplier, props.alertId ?? null,
+      null, null, props.productId, props.supplierId, null, props.alertId ?? null,
       props.quantity, OrderStatus.PENDIENTE, null, null, null, null
     );
   }
 
   public static restore(row: {
-    id: number; uid: string; productId: number; supplier: string; alertId: number | null;
-    quantity: number; status: OrderStatus; rejectionReason: string | null;
-    createdAt: Date; approvedAt: Date | null; receivedAt: Date | null;
+    id: number; uid: string; productId: number; supplierId: number; supplier: string;
+    alertId: number | null; quantity: number; status: OrderStatus;
+    rejectionReason: string | null; createdAt: Date;
+    approvedAt: Date | null; receivedAt: Date | null;
   }): PurchaseOrder {
     return new PurchaseOrder(
-      row.id, row.uid, row.productId, row.supplier, row.alertId, row.quantity,
-      row.status, row.rejectionReason, row.createdAt, row.approvedAt, row.receivedAt
+      row.id, row.uid, row.productId, row.supplierId, row.supplier, row.alertId,
+      row.quantity, row.status, row.rejectionReason, row.createdAt, row.approvedAt, row.receivedAt
     );
+  }
+
+  /** Nombre del proveedor (disponible tras leer de la BD). */
+  get supplier(): string {
+    if (this._supplierName === null) {
+      throw new ValidationError('El nombre del proveedor se resuelve al persistir.');
+    }
+    return this._supplierName;
   }
 
   public isPersisted(): boolean { return this._id !== null; }

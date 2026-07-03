@@ -12,11 +12,11 @@ export class CreateProductMapper extends BaseRequestMapper<Product> {
     const b = req.body ?? {};
     return Product.create({
       name: this.requireString(b.name, 'name'),
-      category: this.requireString(b.category, 'category'),
+      categoryId: this.requireNumber(b.categoryId, 'categoryId'),   // ID del select del front
       price: this.requireNumber(b.price, 'price'),
       currentStock: this.optionalNumber(b.currentStock, 'currentStock'),
       minimumStock: this.requireNumber(b.minimumStock, 'minimumStock'),
-      supplier: this.requireString(b.supplier, 'supplier')
+      supplierId: this.requireNumber(b.supplierId, 'supplierId')    // ID del select del front
     });
   }
 }

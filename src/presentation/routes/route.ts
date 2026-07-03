@@ -4,6 +4,8 @@ import { TYPES } from '../../container/types';
 import { ITokenService } from '../../domain/ports/token-service';
 import { authGuard } from '../middlewares/auth.middleware';
 import { buildAlertRouter } from './alert.route';
+import { buildCategoryRouter } from './category.route';
+import { buildSupplierRouter } from './supplier.route';
 import { buildAuthRouter } from './auth.route';
 import { buildOrderRouter } from './order.route';
 import { buildProductRouter } from './product.route';
@@ -20,6 +22,8 @@ export function buildRouter(container: Container): Router {
 
   const guard = authGuard(container.get<ITokenService>(TYPES.TokenService));
   router.use('/products', guard, buildProductRouter(container));
+  router.use('/categories', guard, buildCategoryRouter(container));
+  router.use('/suppliers', guard, buildSupplierRouter(container));
   router.use('/alerts', guard, buildAlertRouter(container));
   router.use('/orders', guard, buildOrderRouter(container));
 

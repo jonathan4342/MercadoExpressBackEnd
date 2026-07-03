@@ -2,7 +2,7 @@ import { OrderStatus, PurchaseOrder } from '../domain/entities/purchase-order.en
 import { ConflictError, ValidationError } from '../domain/errors/domain.errors';
 
 const build = () => PurchaseOrder.create({
-  productId: 1, supplier: 'Lácteos del Valle', quantity: 80, minimumOrderQuantity: 80
+  productId: 1, supplierId: 2, quantity: 80, minimumOrderQuantity: 80
 });
 
 describe('PurchaseOrder (máquina de estados — RF-04, RF-05)', () => {
@@ -14,7 +14,7 @@ describe('PurchaseOrder (máquina de estados — RF-04, RF-05)', () => {
 
   it('Regla 2: rechaza cantidad menor a 2x el stock mínimo', () => {
     expect(() => PurchaseOrder.create({
-      productId: 1, supplier: 'X', quantity: 79, minimumOrderQuantity: 80
+      productId: 1, supplierId: 2, quantity: 79, minimumOrderQuantity: 80
     })).toThrow(ValidationError);
   });
 
