@@ -6,6 +6,7 @@ import { ListProductMovementsService } from '../application/services/list-produc
 import { ReceiveOrderService } from '../application/services/receive-order.service';
 import { ApproveOrderUseCase } from '../application/use-cases/approve-order.use-case';
 import { CreateProductUseCase } from '../application/use-cases/create-product.use-case';
+import { UpdateProductUseCase } from '../application/use-cases/update-product.use-case';
 import { IssueTokenUseCase } from '../application/use-cases/issue-token.use-case';
 import { ListAlertsUseCase } from '../application/use-cases/list-alerts.use-case';
 import { ListCategoriesUseCase } from '../application/use-cases/list-categories.use-case';
@@ -66,6 +67,7 @@ export function buildContainer(): Container {
 
   // Casos de uso de un solo repositorio
   container.bind(TYPES.CreateProductUseCase).to(CreateProductUseCase);
+  container.bind(TYPES.UpdateProductUseCase).to(UpdateProductUseCase);
   container.bind(TYPES.ListInventoryUseCase).to(ListInventoryUseCase);
   container.bind(TYPES.ListCategoriesUseCase).to(ListCategoriesUseCase);
   container.bind(TYPES.ListSuppliersUseCase).to(ListSuppliersUseCase);

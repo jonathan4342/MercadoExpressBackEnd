@@ -40,6 +40,13 @@ export class PostgresProductRepository implements IProductRepository {
     return rows[0] ? this.toEntity(rows[0]) : null;
   }
 
+  public async findByName(name: string): Promise<Product | null> {
+    const { rows } = await this.db.query(
+      `${BASE_SELECT} WHERE LOWER(p.name) = LOWER($1)`, [name.trim()]
+    );
+    return rows[0] ? this.toEntity(rows[0]) : null;
+  }
+
   public async findAll(f: InventoryFilters): Promise<Product[]> {
     const where: string[] = [];
     const params: unknown[] = [];

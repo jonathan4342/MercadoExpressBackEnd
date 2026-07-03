@@ -13,6 +13,8 @@ export interface IProductRepository {
   findByUidForUpdate(uid: string): Promise<Product | null>;
   findByIdForUpdate(id: number): Promise<Product | null>;
   findBySku(sku: string): Promise<Product | null>;
+  /** Búsqueda por nombre exacto (case-insensitive) para impedir descripciones duplicadas. */
+  findByName(name: string): Promise<Product | null>;
   findAll(filters: InventoryFilters): Promise<Product[]>;
   /** INSERT si no está persistido (devuelve la entidad con id/uid de la BD); UPDATE si ya lo está. */
   save(product: Product): Promise<Product>;

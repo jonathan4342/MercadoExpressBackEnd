@@ -10,9 +10,16 @@ export class ExpressServer {
   private readonly app: Application;
 
   constructor(private readonly container: Container) {
+    // Orígenes permitidos: se limpian espacios y entradas vacías; sin variable → abierto (*)
+    const origins = (process.env.CORS_ORIGIN ?? '')
+      .split(',')
+      .map((o) => o.trim().replace(/\/+$/, '')) // sin espacios ni slash final
+      .filter((o) => o.length > 0);
+    console.log('[CORS] orígenes permitidos:', origins.length ? origins : '* (todos)');
+
     this.app = express();
     this.app.use(helmet());
-    this.app.use(cors({ origin: process.env.CORS_ORIGIN?.split(',') ?? '*' }));
+    this.app.use(cors({ origin: origins.length ? origins : '*' }));
     this.app.use(express.json());
     this.app.use('/api', buildRouter(this.container));
     this.app.use(errorHandler);

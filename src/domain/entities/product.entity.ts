@@ -12,6 +12,14 @@ export interface CreateProductProps {
   supplierId: number;
 }
 
+export interface UpdateProductProps {
+  name: string;
+  categoryId: number;
+  price: number;
+  minimumStock: number;
+  supplierId: number;
+}
+
 /**
  * Entidad de dominio (RF-01, RF-02, Reglas 1 y 2).
  * Referencia categoría y proveedor por ID (los selects del front envían IDs);
@@ -24,12 +32,12 @@ export class Product {
     private readonly _uid: string | null,
     private readonly _sku: Sku | null,
     private _name: string,
-    private readonly _categoryId: number,
+    private _categoryId: number,
     private readonly _categoryName: string | null,
     private _price: number,
     private _currentStock: number,
     private _minimumStock: number,
-    private readonly _supplierId: number,
+    private _supplierId: number,
     private readonly _supplierName: string | null
   ) {}
 
@@ -50,6 +58,24 @@ export class Product {
       props.name.trim(), props.categoryId, null, props.price,
       initialStock, props.minimumStock, props.supplierId, null
     );
+  }
+
+  /**
+   * RF-01 (edición): actualiza los datos editables de un producto ya persistido.
+   * El stock actual NO se toca aquí (se gestiona vía ajustes RF-02). Los nombres
+   * de categoría/proveedor se resuelven al releer de la BD tras guardar.
+   */
+  public updateDetails(props: UpdateProductProps): void {
+    Product.assertName(props.name);
+    Product.assertPrice(props.price);
+    Product.assertMinimumStock(props.minimumStock);
+    Product.assertCatalogId(props.categoryId, 'categoryId');
+    Product.assertCatalogId(props.supplierId, 'supplierId');
+    this._name = props.name.trim();
+    this._categoryId = props.categoryId;
+    this._price = props.price;
+    this._minimumStock = props.minimumStock;
+    this._supplierId = props.supplierId;
   }
 
   /** Rehidratación desde la base de datos (con nombres resueltos por JOIN). */

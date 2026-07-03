@@ -14,6 +14,7 @@ export const TYPES = {
 
   // Casos de uso de un solo repositorio (consumidos directo por controladores)
   CreateProductUseCase: Symbol.for('CreateProductUseCase'),
+  UpdateProductUseCase: Symbol.for('UpdateProductUseCase'),
   ListInventoryUseCase: Symbol.for('ListInventoryUseCase'),
   ListCategoriesUseCase: Symbol.for('ListCategoriesUseCase'),
   ListSuppliersUseCase: Symbol.for('ListSuppliersUseCase'),
