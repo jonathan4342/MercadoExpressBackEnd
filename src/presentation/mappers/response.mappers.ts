@@ -31,7 +31,7 @@ export class MovementResponseMapper {
 export class AlertResponseMapper {
   public static toDto(a: Alert): AlertResponseDto {
     return {
-      uid: a.uid, productId: a.productId, type: a.type, status: a.status,
+      uid: a.uid, productId: a.productId, productUid: a.productUid, type: a.type, status: a.status,
       createdAt: a.createdAt, resolvedAt: a.resolvedAt
     };
   }
@@ -40,7 +40,7 @@ export class AlertResponseMapper {
 export class OrderResponseMapper {
   public static toDto(o: PurchaseOrder): OrderResponseDto {
     return {
-      uid: o.uid, productId: o.productId,
+      uid: o.uid, productId: o.productId, productUid: o.productUid,
       supplierId: o.supplierId, supplier: o.supplier, alertId: o.alertId,
       quantity: o.quantity, status: o.status, rejectionReason: o.rejectionReason,
       createdAt: o.createdAt, approvedAt: o.approvedAt, receivedAt: o.receivedAt

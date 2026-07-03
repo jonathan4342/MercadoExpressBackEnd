@@ -30,7 +30,7 @@ class FakeDb {
     const active = this.alerts.find((a) => a.productId === p.id && a.isActive());
     if (p.isAtOrBelowMinimum() && !active) {
       this.alerts.push(Alert.restore({
-        id: this.alerts.length + 1, uid: randomUUID(), productId: p.id,
+        id: this.alerts.length + 1, uid: randomUUID(), productId: p.id, productUid: p.uid,
         type: AlertType.STOCK_BAJO, status: AlertStatus.ACTIVA,
         createdAt: new Date(), resolvedAt: null
       }));

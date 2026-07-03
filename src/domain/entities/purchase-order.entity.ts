@@ -13,6 +13,7 @@ export class PurchaseOrder {
     private readonly _id: number | null,
     private readonly _uid: string | null,
     public readonly productId: number,
+    private readonly _productUid: string | null,
     public readonly supplierId: number,
     private readonly _supplierName: string | null,
     public readonly alertId: number | null,
@@ -25,7 +26,7 @@ export class PurchaseOrder {
   ) {}
 
   public static create(props: {
-    productId: number; supplierId: number; quantity: number;
+    productId: number; productUid: string; supplierId: number; quantity: number;
     minimumOrderQuantity: number; alertId?: number | null;
   }): PurchaseOrder {
     if (!Number.isInteger(props.quantity) || props.quantity <= 0) {
@@ -38,21 +39,28 @@ export class PurchaseOrder {
       );
     }
     return new PurchaseOrder(
-      null, null, props.productId, props.supplierId, null, props.alertId ?? null,
+      null, null, props.productId, props.productUid, props.supplierId, null, props.alertId ?? null,
       props.quantity, OrderStatus.PENDIENTE, null, null, null, null
     );
   }
 
   public static restore(row: {
-    id: number; uid: string; productId: number; supplierId: number; supplier: string;
+    id: number; uid: string; productId: number; productUid: string; supplierId: number; supplier: string;
     alertId: number | null; quantity: number; status: OrderStatus;
     rejectionReason: string | null; createdAt: Date;
     approvedAt: Date | null; receivedAt: Date | null;
   }): PurchaseOrder {
     return new PurchaseOrder(
-      row.id, row.uid, row.productId, row.supplierId, row.supplier, row.alertId,
+      row.id, row.uid, row.productId, row.productUid, row.supplierId, row.supplier, row.alertId,
       row.quantity, row.status, row.rejectionReason, row.createdAt, row.approvedAt, row.receivedAt
     );
+  }
+
+  get productUid(): string {
+    if (this._productUid === null) {
+      throw new ValidationError('El uid del producto se resuelve al persistir.');
+    }
+    return this._productUid;
   }
 
   /** Nombre del proveedor (disponible tras leer de la BD). */

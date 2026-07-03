@@ -28,6 +28,7 @@ export interface MovementResponseDto {
 export interface AlertResponseDto {
   uid: string;
   productId: number;
+  productUid: string;
   type: string;
   status: string;
   createdAt: Date;
@@ -37,6 +38,7 @@ export interface AlertResponseDto {
 export interface OrderResponseDto {
   uid: string;
   productId: number;
+  productUid: string;
   supplierId: number;
   supplier: string;
   alertId: number | null;

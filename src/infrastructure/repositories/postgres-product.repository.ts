@@ -67,7 +67,6 @@ export class PostgresProductRepository implements IProductRepository {
   public async save(product: Product): Promise<Product> {
     try {
       if (!product.isPersisted()) {
-        // La BD asigna id (IDENTITY), uid y SKU (trigger); los nombres se resuelven aquí
         const { rows } = await this.db.query(
           `INSERT INTO products (name, category_id, price, current_stock, minimum_stock, supplier_id)
            VALUES ($1, $2, $3, $4, $5, $6)

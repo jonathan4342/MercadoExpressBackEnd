@@ -3,6 +3,7 @@ import { IPurchaseOrderRepository } from '../../domain/ports/purchase-order.repo
 
 export interface RegisterOrderInput {
   productId: number;
+  productUid: string;
   supplierId: number;
   quantity: number;
   minimumOrderQuantity: number; // Regla 2, la valida la entidad

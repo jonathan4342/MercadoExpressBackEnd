@@ -10,6 +10,7 @@ export class Alert {
     public readonly id: number,
     public readonly uid: string,
     public readonly productId: number,
+    public readonly productUid: string,
     public readonly type: AlertType,
     public readonly status: AlertStatus,
     public readonly createdAt: Date,
@@ -17,10 +18,13 @@ export class Alert {
   ) {}
 
   public static restore(row: {
-    id: number; uid: string; productId: number; type: AlertType;
+    id: number; uid: string; productId: number; productUid: string; type: AlertType;
     status: AlertStatus; createdAt: Date; resolvedAt: Date | null;
   }): Alert {
-    return new Alert(row.id, row.uid, row.productId, row.type, row.status, row.createdAt, row.resolvedAt);
+    return new Alert(
+      row.id, row.uid, row.productId, row.productUid, row.type,
+      row.status, row.createdAt, row.resolvedAt
+    );
   }
 
   public isActive(): boolean { return this.status === AlertStatus.ACTIVA; }

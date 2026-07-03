@@ -4,9 +4,10 @@ import { IAlertRepository } from '../../domain/ports/alert.repository';
 import { Queryable } from '../database/queryable';
 
 const BASE_SELECT = `
-  SELECT a.id, a.uid, a.product_id, at.code AS type, st.code AS status,
+  SELECT a.id, a.uid, a.product_id, p.uid AS product_uid, at.code AS type, st.code AS status,
          a.created_at, a.resolved_at
   FROM alerts a
+  JOIN products       p  ON p.id = a.product_id
   JOIN alert_types    at ON at.id = a.alert_type_id
   JOIN alert_statuses st ON st.id = a.alert_status_id
 `;
@@ -38,7 +39,7 @@ export class PostgresAlertRepository implements IAlertRepository {
 
   private toEntity(r: any): Alert {
     return Alert.restore({
-      id: r.id, uid: r.uid, productId: r.product_id, type: r.type,
+      id: r.id, uid: r.uid, productId: r.product_id, productUid: r.product_uid, type: r.type,
       status: r.status, createdAt: r.created_at, resolvedAt: r.resolved_at
     });
   }
