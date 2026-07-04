@@ -1,11 +1,43 @@
+# Levanta la base de datos (con schema + seed) y la API del backend.
+# Uso:  cd backend && docker compose up --build
+# La API queda en http://localhost:3000/api  (login: admin / Admin123*)
+
 services:
   db:
     image: postgres:16-alpine
+    container_name: mercadoexpress-db
     environment:
-      POSTGRES_DB: mercadoexpress
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mercadoexpress
     ports:
       - "5432:5432"
     volumes:
-      - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ../database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - pgdata:/var/lib/postgresql/data
+      # schema.sql y seed.sql se ejecutan (en orden) solo la PRIMERA vez,
+      # cuando el volumen pgdata está vacío.
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mercadoexpress"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: mercadoexpress-api
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/mercadoexpress
+      CORS_ORIGIN: http://localhost:4200
+      JWT_SECRET: cambia-este-secreto-en-produccion
+      JWT_EXPIRES_IN: 3600
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
