@@ -51,6 +51,7 @@ class FakeDb {
           [...this.products.values()].find((p) => p.uid === uid) ?? null,
         findByIdForUpdate: async (id) => this.products.get(id) ?? null,
         findBySku: async () => null,
+        findByName: async () => null,
         findAll: async () => [...this.products.values()],
         save: async (p) => { this.products.set(p.id, p); this.emulateAlertTrigger(p); return p; }
       },

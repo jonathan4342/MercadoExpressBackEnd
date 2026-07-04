@@ -17,6 +17,7 @@ class FakeUnitOfWork implements IUnitOfWork {
         findByUidForUpdate: async () => null,
         findByIdForUpdate: async () => null,
         findBySku: async () => null,
+        findByName: async () => null,
         findAll: async () => [...this.products.values()],
         save: async (p: Product) => {
           // Emula el trigger trg_products_generate_sku de la BD

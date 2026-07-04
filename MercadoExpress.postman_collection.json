@@ -1,0 +1,310 @@
+{
+  "info": {
+    "name": "MercadoExpress — API de Inventario",
+    "description": "Colección completa del backend (auth JWT, productos, ajustes de stock e historial, catálogos, alertas y órdenes). Ejecuta primero '1. Auth > Obtener token' para poblar la variable {{token}}; el resto de requests la usan automáticamente.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "productUid", "value": "", "type": "string" },
+    { "key": "orderUid", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "0. Salud",
+      "item": [
+        {
+          "name": "Health check (público)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Obtener token (público)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.accessToken) {",
+                  "  pm.collectionVariables.set('token', body.accessToken);",
+                  "  console.log('Token guardado en {{token}}');",
+                  "}",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin123*\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/token", "host": ["{{baseUrl}}"], "path": ["auth", "token"] }
+          }
+        },
+        {
+          "name": "Credenciales inválidas → 401",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"clave-mala\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/token", "host": ["{{baseUrl}}"], "path": ["auth", "token"] }
+          }
+        },
+        {
+          "name": "Sin token → 401",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/products", "host": ["{{baseUrl}}"], "path": ["products"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Catálogos",
+      "item": [
+        {
+          "name": "Listar categorías",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "Listar proveedores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/suppliers", "host": ["{{baseUrl}}"], "path": ["suppliers"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Productos (RF-01, RF-02, RF-06)",
+      "item": [
+        {
+          "name": "Crear producto (SKU lo genera la BD)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.uid) { pm.collectionVariables.set('productUid', body.uid); }",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Manzana Roja kg\",\n  \"categoryId\": 5,\n  \"price\": 4200,\n  \"currentStock\": 50,\n  \"minimumStock\": 20,\n  \"supplierId\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/products", "host": ["{{baseUrl}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "Crear producto inválido → 400",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"ab\",\n  \"categoryId\": 0,\n  \"price\": 0,\n  \"minimumStock\": 0,\n  \"supplierId\": \"texto\"\n}" },
+            "url": { "raw": "{{baseUrl}}/products", "host": ["{{baseUrl}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "Listar inventario (todos)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/products", "host": ["{{baseUrl}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "Listar con filtros (RF-06)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?category=Lácteos&supplier=Lácteos del Valle&activeAlert=true&minStock=0&maxStock=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "category", "value": "Lácteos" },
+                { "key": "supplier", "value": "Lácteos del Valle" },
+                { "key": "activeAlert", "value": "true" },
+                { "key": "minStock", "value": "0" },
+                { "key": "maxStock", "value": "100" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar producto (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Manzana Roja Premium kg\",\n  \"categoryId\": 5,\n  \"price\": 4800,\n  \"minimumStock\": 25,\n  \"supplierId\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/products/{{productUid}}", "host": ["{{baseUrl}}"], "path": ["products", "{{productUid}}"] }
+          }
+        },
+        {
+          "name": "Ajuste: ENTRADA de mercadería (RF-02)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"ENTRADA\",\n  \"quantity\": 100,\n  \"reason\": \"Reposición de bodega\"\n}" },
+            "url": { "raw": "{{baseUrl}}/products/{{productUid}}/adjustments", "host": ["{{baseUrl}}"], "path": ["products", "{{productUid}}", "adjustments"] }
+          }
+        },
+        {
+          "name": "Ajuste: SALIDA que dispara alerta (RF-02 + RF-03)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"SALIDA\",\n  \"quantity\": 35,\n  \"reason\": \"Venta mostrador\"\n}" },
+            "url": { "raw": "{{baseUrl}}/products/{{productUid}}/adjustments", "host": ["{{baseUrl}}"], "path": ["products", "{{productUid}}", "adjustments"] }
+          }
+        },
+        {
+          "name": "Ajuste: SALIDA sin stock suficiente → 422",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"SALIDA\",\n  \"quantity\": 999999,\n  \"reason\": \"Prueba de regla de no-negativo\"\n}" },
+            "url": { "raw": "{{baseUrl}}/products/{{productUid}}/adjustments", "host": ["{{baseUrl}}"], "path": ["products", "{{productUid}}", "adjustments"] }
+          }
+        },
+        {
+          "name": "Historial de movimientos (RF-02)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/products/{{productUid}}/movements", "host": ["{{baseUrl}}"], "path": ["products", "{{productUid}}", "movements"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Alertas (RF-03)",
+      "item": [
+        {
+          "name": "Listar alertas (todas)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/alerts", "host": ["{{baseUrl}}"], "path": ["alerts"] }
+          }
+        },
+        {
+          "name": "Listar alertas activas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts?status=ACTIVA",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts"],
+              "query": [{ "key": "status", "value": "ACTIVA" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Órdenes de compra (RF-04, RF-05)",
+      "item": [
+        {
+          "name": "Crear orden",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.uid) { pm.collectionVariables.set('orderUid', body.uid); }",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productUid\": \"{{productUid}}\",\n  \"quantity\": 40\n}" },
+            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Listar órdenes (todas)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Listar órdenes pendientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders?status=PENDIENTE",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"],
+              "query": [{ "key": "status", "value": "PENDIENTE" }]
+            }
+          }
+        },
+        {
+          "name": "Aprobar orden",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/orders/{{orderUid}}/approve", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderUid}}", "approve"] }
+          }
+        },
+        {
+          "name": "Rechazar orden (con motivo)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Proveedor sin disponibilidad\"\n}" },
+            "url": { "raw": "{{baseUrl}}/orders/{{orderUid}}/reject", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderUid}}", "reject"] }
+          }
+        },
+        {
+          "name": "Marcar orden como recibida (suma stock)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/orders/{{orderUid}}/receive", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderUid}}", "receive"] }
+          }
+        }
+      ]
+    }
+  ]
+}
